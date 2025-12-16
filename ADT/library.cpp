@@ -1,4 +1,3 @@
-// library.cpp
 #include "library.h"
 #include <iostream>
 #include <string>

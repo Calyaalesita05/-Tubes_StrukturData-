@@ -1,4 +1,3 @@
-// lagu.cpp
 #include "lagu.h"
 #include <iostream>
 #include <limits>

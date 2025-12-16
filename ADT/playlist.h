@@ -1,7 +1,8 @@
-//playlist.h
-#ifndef DLL_PLAYLIST_H
-#define DLL_PLAYLIST_H
+#ifndef PLAYLIST_MUSIC_APP_H
+#define PLAYLIST_MUSIC_APP_H
+
 #include "lagu.h"
+#include <string>
 
 struct NodeDLL {
     PointerLagu laguPtr;
@@ -19,5 +20,6 @@ void CreatePlaylist(Playlist& P);
 void InsertLaguKePlaylist(Playlist& P, PointerLagu pLagu);
 void NextLagu(Playlist& P);
 void PrevLagu(Playlist& P);
+void DeleteLaguFromPlaylist(Playlist& P, std::string idLagu);
 
 #endif

@@ -1,13 +1,27 @@
 #include <iostream>
 #include <limits>
 #include <string>
-#include "library.h"
-#include "lagu.h"
-#include "playlist.h"
 
+#include "lagu.h"
+#include "library.h"
+#include "playlist.h"
+#include "history.h"
+#include "recomend.h"
+
+// ================= GLOBAL VARIABLES & INITS =================
+HistoryStack RiwayatPutar;
 BSTree LibraryUtama = nullptr;
 int ID_Counter = 6;
 Playlist playlistUser;
+
+// ================= LOGIN DATA =================
+// Struktur Akun didefinisikan di lagu.h
+const int MAX_AKUN = 2;
+Akun DaftarAkun[MAX_AKUN] = {
+    {"admin", "admin123", "Admin"},
+    {"user", "user123", "User"}
+};
+
 
 void InitLibrary(BSTree& root) {
     Lagu l1 = {"B002", "Darling", "Seventeen", "Pop", 2022, 191,
@@ -70,11 +84,13 @@ void PutarLaguMenu() {
     bool keluar = false;
 
     while (!keluar) {
+        PointerLagu laguYangAkanDiputar = playlistUser.current->laguPtr;
+        PushHistory(RiwayatPutar, laguYangAkanDiputar);
+        
         // tampilkan lagu yang siap diputar
-        std::cout << "\n=== PUTAR LAGU ===\n";
+        std::cout << "\n=== SEDANG MEMUTAR ===\n";
         std::cout << "Judul : " << playlistUser.current->laguPtr->Judul << std::endl;
         std::cout << "Artis : " << playlistUser.current->laguPtr->Artis << std::endl;
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
         std::cout << "\n--- LIRIK ---\n";
         std::cout << playlistUser.current->laguPtr->Lirik_Sample << std::endl;
@@ -82,7 +98,9 @@ void PutarLaguMenu() {
         std::cout << "\n--- KONTROL PEMUTARAN ---\n";
         std::cout << "1. Lagu Berikutnya\n";
         std::cout << "2. Lagu Sebelumnya\n";
-        std::cout << "3. Kembali ke Menu User\n";
+        std::cout << "3. Kembali ke Lagu Sebelumnya (History)\n";
+        std::cout << "4. Dapatkan Rekomendasi (Genre)\n";
+        std::cout << "5. Kembali ke Menu User\n";
         std::cout << "Pilih: ";
 
         if (!(std::cin >> pilihan)) {
@@ -104,6 +122,29 @@ void PutarLaguMenu() {
                 }
                 break;
             case 3:
+            {
+                PointerLagu laguHistory = PopHistory(RiwayatPutar);
+                if (laguHistory != nullptr) {
+                    std::cout << "<- Memutar ulang lagu dari Riwayat: " << laguHistory->Judul << std::endl;
+                    // Note: Tambahkan logika untuk mencari lagu ini di playlist 
+                    // dan set P.current = node DLL jika ingin melanjutkan putaran
+                } else {
+                    std::cout << "Riwayat kosong.\n";
+                }
+                break;
+            }
+            case 4:
+            {
+                // Variabel laguYangAkanDiputar sudah dideklarasikan di awal loop.
+                PointerLagu laguRec = FindNextSimilarSong(LibraryUtama, laguYangAkanDiputar->Genre, laguYangAkanDiputar->ID_Lagu);
+                if (laguRec != nullptr) {
+                    std::cout << "\n[REKOMENDASI DITEMUKAN] Lagu serupa: " << laguRec->Judul << " (" << laguRec->Artis << ")\n";
+                } else {
+                    std::cout << "\nTidak ditemukan lagu serupa (" << laguYangAkanDiputar->Genre << ") di Library.\n";
+                }
+                break;
+            }
+            case 5:
                 keluar = true;
                 break;
             default:
@@ -138,13 +179,7 @@ void MenuUser() {
     } while (pilih != 4);
 }
 
-// ================= LOGIN =================
-const int MAX_AKUN = 2;
-Akun DaftarAkun[MAX_AKUN] = {
-    {"admin", "admin123", "Admin"},
-    {"user", "user123", "User"}
-};
-
+// ================= LOGIN PROCCESS =================
 std::string ProsesLogin() {
     std::string u, p;
     std::cout << "\n--- LOGIN ---\n";
@@ -163,7 +198,7 @@ std::string ProsesLogin() {
     return "";
 }
 
-// ================= ADMIN =================
+// ================= ADMIN MENU =================
 void MenuAdmin() {
     int pilih;
     std::string id;
@@ -184,6 +219,7 @@ void MenuAdmin() {
             Lagu baru = InputLaguBaru(ID_Counter);
             InsertLagu(LibraryUtama, baru);
         } else if (pilih == 2) {
+            std::cout << "\n--- KOLEKSI LAGU (IN-ORDER TRAVERSAL) ---\n";
             DisplayInOrder(LibraryUtama);
         } else if (pilih == 3) {
             std::cout << "ID Lagu: ";
@@ -192,15 +228,25 @@ void MenuAdmin() {
         } else if (pilih == 4) {
             std::cout << "ID Lagu: ";
             std::getline(std::cin, id);
-            DeleteLagu(LibraryUtama, id);
+
+            // Cek apakah lagu ada sebelum menghapus
+            if (FindLagu(LibraryUtama, id) != nullptr) {
+                // Panggil sinkronisasi sebelum menghapus dari library
+                DeleteLaguFromPlaylist(playlistUser, id); 
+                // Hapus lagu dari Library (BST)
+                DeleteLagu(LibraryUtama, id); 
+            } else {
+                 std::cout << "Lagu dengan ID " << id << " tidak ditemukan di Library.\n";
+            }
         }
 
     } while (pilih != 5);
 }
 
-// ================= MAIN =================
+// ================= MAIN FUNCTION =================
 int main() {
     InitLibrary(LibraryUtama);
+    CreateHistory(RiwayatPutar);
 
     int pilih;
     std::string role;

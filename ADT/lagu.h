@@ -1,4 +1,3 @@
-// lagu.h
 #ifndef LAGU_H
 #define LAGU_H
 

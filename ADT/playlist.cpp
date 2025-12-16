@@ -1,4 +1,3 @@
-//playlist.cpp
 #include "playlist.h"
 #include <iostream>
 
@@ -66,5 +65,52 @@ void PrevLagu(Playlist& P) {
         std::cout << "<- Memutar lagu sebelumnya: " << P.current->laguPtr->Judul << std::endl;
     } else {
         std::cout << "Awal Playlist. Tidak ada lagu sebelumnya." << std::endl;
+    }
+}
+
+void DeleteLaguFromPlaylist(Playlist& P, std::string idLagu) {
+    NodeDLL* current = P.first;
+    NodeDLL* temp;
+    bool deleted = false;
+
+    while (current != nullptr) {
+        // Cek apakah PointerLagu merujuk ke Lagu yang ID-nya ingin dihapus
+        if (current->laguPtr->ID_Lagu == idLagu) {
+            temp = current; // Simpan node yang akan dihapus
+
+            // Update pointer di Playlist (P.current, P.first, P.last)
+            if (current == P.current) {
+                // Jika lagu yang sedang diputar dihapus, pindah ke lagu berikutnya (atau null jika akhir)
+                P.current = current->next; 
+            }
+            if (current == P.first) {
+                P.first = current->next;
+            }
+            if (current == P.last) {
+                P.last = current->prev;
+            }
+
+            // Memperbaiki link tetangga (logika DLL standard delete)
+            if (current->prev != nullptr) {
+                current->prev->next = current->next;
+            }
+            if (current->next != nullptr) {
+                current->next->prev = current->prev;
+            }
+
+            // Pindah ke node berikutnya sebelum menghapus temp
+            current = current->next;
+            
+            // Hapus node DLL (bukan data lagu di Library)
+            delete temp;
+            deleted = true;
+        } else {
+            // Lanjut ke node berikutnya jika ID tidak cocok
+            current = current->next;
+        }
+    }
+
+    if (deleted) {
+        std::cout << "Lagu ID " << idLagu << " berhasil disinkronisasi dan dihapus dari Playlist.\n";
     }
 }

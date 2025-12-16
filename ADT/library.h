@@ -1,4 +1,3 @@
-//library.h
 #ifndef BST_LIBRARY_H
 #define BST_LIBRARY_H
 #include "lagu.h"
